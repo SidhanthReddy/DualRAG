@@ -1,0 +1,50 @@
+[
+  {
+    "artifact_id": "8afabfb4-d0ea-4554-8244-739a7ae2df43",
+    "type": "component",
+    "name": "Navbar",
+    "file_path": "components/Navbar.tsx",
+    "content": "<nav class='h-16 bg-white' />",
+    "language": "tsx",
+    "version": 1,
+    "is_active": false,
+    "source": "ai_generated",
+    "dependencies": [],
+    "framework": "react",
+    "styling": "tailwind",
+    "created_at": "2026-01-14 05:57:01.548978",
+    "updated_at": "2026-01-14 05:57:01.549981"
+  },
+  {
+    "artifact_id": "905d3181-e499-482f-9157-15f6f7dc14fc",
+    "type": "component",
+    "name": "Navbar",
+    "file_path": "components/Navbar.tsx",
+    "content": "<nav class='h-20 bg-white' />",
+    "language": "tsx",
+    "version": 2,
+    "is_active": false,
+    "source": "user_modified",
+    "dependencies": [],
+    "framework": "react",
+    "styling": "tailwind",
+    "created_at": "2026-01-14 05:57:01.549981",
+    "updated_at": "2026-01-14 05:57:01.550983"
+  },
+  {
+    "artifact_id": "805f2b35-2d69-4466-ba51-b4fd003ba029",
+    "type": "component",
+    "name": "Navbar",
+    "file_path": "components/Navbar.tsx",
+    "content": "<nav class='h-20 bg-blue-600 text-white' />",
+    "language": "tsx",
+    "version": 3,
+    "is_active": true,
+    "source": "user_modified",
+    "dependencies": [],
+    "framework": "react",
+    "styling": "tailwind",
+    "created_at": "2026-01-14 05:57:01.550983",
+    "updated_at": "2026-01-14 05:57:01.550983"
+  }
+]

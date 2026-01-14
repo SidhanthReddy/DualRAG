@@ -1,0 +1,26 @@
+[
+  {
+    "id": "navbar_sticky",
+    "category": "ui-pattern",
+    "title": "Sticky Navbar Pattern",
+    "content": "Use position sticky with top-0 and z-50. Always set a background color to avoid transparency issues.",
+    "tags": [
+      "navbar",
+      "tailwind"
+    ],
+    "framework": "react",
+    "styling": "tailwind"
+  },
+  {
+    "id": "navbar_sticky",
+    "category": "ui-pattern",
+    "title": "Sticky Navbar Pattern",
+    "content": "Use position sticky with top-0 and z-50. Always set a background color to avoid transparency issues.",
+    "tags": [
+      "navbar",
+      "tailwind"
+    ],
+    "framework": "react",
+    "styling": "tailwind"
+  }
+]
