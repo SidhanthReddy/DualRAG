@@ -1,5 +1,6 @@
 from typing import Optional
 import os
+from dotenv import load_dotenv
 
 
 class LLMAdapter:
@@ -11,23 +12,30 @@ class LLMAdapter:
     def __init__(self, provider: str = "mock"):
         """
         provider:
-          - "mock"     → deterministic fake output (default)
-          - "openai"   → OpenAI Chat API (optional)
+          - "mock"
+          - "openai"
+          - "gemini"
         """
-        self.provider = provider
+        self.provider = provider.lower()
 
-        if provider == "openai":
-            try:
-                import openai
-            except ImportError:
-                raise RuntimeError(
-                    "openai package not installed. Run: pip install openai"
-                )
+        # Load .env if present
+        load_dotenv()
 
-            self.openai = openai
-            self.openai.api_key = os.getenv("OPENAI_API_KEY")
-            if not self.openai.api_key:
-                raise RuntimeError("OPENAI_API_KEY not set")
+        if self.provider == "openai":
+            self._init_openai()
+
+        elif self.provider == "gemini":
+            self._init_gemini()
+
+        elif self.provider == "mock":
+            pass
+
+        else:
+            raise ValueError(f"Unknown LLM provider: {provider}")
+
+    # --------------------------------------------------
+    # Public API
+    # --------------------------------------------------
 
     def generate(self, prompt: str) -> str:
         """
@@ -39,16 +47,47 @@ class LLMAdapter:
         if self.provider == "openai":
             return self._openai_response(prompt)
 
-        raise ValueError(f"Unknown provider: {self.provider}")
+        if self.provider == "gemini":
+            return self._gemini_response(prompt)
 
-    # -----------------------------
+        raise RuntimeError("Invalid LLM provider state")
+
+    # --------------------------------------------------
+    # Provider initializers
+    # --------------------------------------------------
+
+    def _init_openai(self):
+        try:
+            import openai
+        except ImportError:
+            raise RuntimeError("Run: pip install openai")
+
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY not set")
+
+        self.openai = openai
+        self.openai.api_key = api_key
+
+    def _init_gemini(self):
+        try:
+            import google.generativeai as genai
+        except ImportError:
+            raise RuntimeError("Run: pip install google-generativeai")
+
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY not set")
+
+        genai.configure(api_key=api_key)
+        self.genai = genai
+        self.gemini_model = genai.GenerativeModel("models/gemini-2.0-flash")
+
+    # --------------------------------------------------
     # Providers
-    # -----------------------------
+    # --------------------------------------------------
 
     def _mock_response(self, prompt: str) -> str:
-        """
-        Deterministic mock output for testing.
-        """
         return (
             "FILE: components/Navbar.tsx\n"
             "<nav class='h-20 bg-blue-600 text-white'>\n"
@@ -57,9 +96,6 @@ class LLMAdapter:
         )
 
     def _openai_response(self, prompt: str) -> str:
-        """
-        OpenAI ChatCompletion (single-shot).
-        """
         response = self.openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=[
@@ -68,5 +104,14 @@ class LLMAdapter:
             ],
             temperature=0,
         )
-
         return response.choices[0].message["content"]
+
+    def _gemini_response(self, prompt: str) -> str:
+        response = self.gemini_model.generate_content(
+            prompt,
+            generation_config={
+                "temperature": 0,
+                "max_output_tokens": 4096,
+            },
+        )
+        return response.text
