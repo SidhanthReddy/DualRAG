@@ -1,18 +1,34 @@
 [
   {
-    "artifact_id": "c5faa128-f4dc-43f2-805d-ce5b10b73d53",
+    "artifact_id": "47629d30-08d4-44f4-8949-cb652bfdcb13",
     "type": "component",
-    "name": "Navbar",
-    "file_path": "components/Navbar.tsx",
-    "content": "<nav class='h-16 bg-white'>Navbar</nav>",
+    "name": "Real.tsx",
+    "file_path": "components/Real.tsx",
+    "content": "<div>Real</div>",
     "language": "tsx",
     "version": 1,
-    "is_active": true,
+    "is_active": false,
     "source": "ai_generated",
     "dependencies": [],
     "framework": "react",
     "styling": "tailwind",
-    "created_at": "2026-01-15 07:58:17.384636",
-    "updated_at": "2026-01-15 07:58:17.384636"
+    "created_at": "2026-01-21 05:01:42.175120",
+    "updated_at": "2026-01-21 05:01:52.815596"
+  },
+  {
+    "artifact_id": "1557a3cd-5ab3-4654-86f2-e67725e24df0",
+    "type": "component",
+    "name": "Real.tsx",
+    "file_path": "components/Real.tsx",
+    "content": "```tsx\nimport React from 'react';\n\nconst Real = () => {\n  return (\n    <div>Real</div>\n  );\n};\n\nexport default Real;\n```",
+    "language": "tsx",
+    "version": 2,
+    "is_active": true,
+    "source": "ai_modified",
+    "dependencies": [],
+    "framework": "react",
+    "styling": "tailwind",
+    "created_at": "2026-01-21 05:01:52.815596",
+    "updated_at": "2026-01-21 05:01:52.815596"
   }
 ]
