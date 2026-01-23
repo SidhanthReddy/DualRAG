@@ -1,0 +1,13 @@
+{
+  "task_id": "simple_001",
+  "name": "Button Component",
+  "description": "Create a simple React button component with onClick handler",
+  "complexity": "simple",
+  "requirements": [
+    "Create components/Button.tsx",
+    "Accept onClick and children props",
+    "Use Tailwind for styling"
+  ],
+  "ground_truth_path": "evaluation_dataset/simple/simple_001/ground_truth",
+  "test_files": []
+}

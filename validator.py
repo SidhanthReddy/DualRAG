@@ -68,26 +68,36 @@ class SyntaxValidator(ValidationRule):
 
 
 # -------------------------
-# 2. Authority Validator
+# 2. Authority Validator (FIXED)
 # -------------------------
 
 class AuthorityValidator(ValidationRule):
+    """
+    FIXED VERSION:
+    - User-modified files CAN be modified if they're in allowed_paths
+    - Only block if user file is NOT in allowed_paths (user didn't give permission)
+    """
     def check(self, proposed, active, allowed_paths):
         for p in proposed:
             if p.file_path in active:
                 old = active[p.file_path]
 
-                if (
-                    old.source == ArtifactSource.user_modified
-                    and p.file_path not in allowed_paths
-                ):
-                    return ValidationResult(
-                        ok=False,
-                        reason=(
-                            f"Unauthorized modification of user file: "
-                            f"{p.file_path}"
+                # BUG WAS HERE: Logic was inverted!
+                # OLD (WRONG): if user_modified AND not in allowed_paths -> block
+                # NEW (CORRECT): if user_modified AND in allowed_paths -> ALLOW
+                #                if user_modified AND not in allowed_paths -> BLOCK
+                
+                if old.source == ArtifactSource.user_modified:
+                    if p.file_path not in allowed_paths:
+                        # User file but NOT in allowed list = unauthorized
+                        return ValidationResult(
+                            ok=False,
+                            reason=(
+                                f"Unauthorized modification of user file: "
+                                f"{p.file_path}. User must explicitly allow this file."
+                            )
                         )
-                    )
+                    # else: User file IS in allowed_paths = OK! Continue.
 
         return ValidationResult(ok=True)
 

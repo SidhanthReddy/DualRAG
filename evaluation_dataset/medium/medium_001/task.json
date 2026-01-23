@@ -1,0 +1,14 @@
+{
+  "task_id": "medium_001",
+  "name": "Todo App",
+  "description": "Create a todo app with TodoList, TodoItem, and AddTodo components",
+  "complexity": "medium",
+  "requirements": [
+    "Create components/TodoList.tsx",
+    "Create components/TodoItem.tsx",
+    "Create components/AddTodo.tsx",
+    "Use local state management"
+  ],
+  "ground_truth_path": "evaluation_dataset/medium/medium_001/ground_truth",
+  "test_files": []
+}

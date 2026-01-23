@@ -1,4 +1,5 @@
 from typing import List
+import time
 
 from state_rag_manager import StateRAGManager
 from global_rag import GlobalRAG
@@ -22,6 +23,10 @@ class Orchestrator:
     - Parse LLM output
     - Validate proposed changes
     - Commit validated artifacts
+    
+    FIXED:
+    - Pre-validation to avoid wasting LLM quota
+    - Retry logic for transient LLM failures
     """
 
     def __init__(self, llm_provider: str = "mock"):
@@ -41,12 +46,18 @@ class Orchestrator:
     ):
         """
         Executes one full user interaction.
+        
+        FIXED: Added pre-validation and retry logic.
         """
 
         # 1. Retrieve authoritative project state
         active_artifacts = self.state_rag.retrieve(
             file_paths=allowed_paths
         )
+
+        # FIX #1: Pre-validate authority BEFORE expensive LLM call
+        # This prevents wasting API quota on requests that will fail validation
+        self._pre_validate_authority(active_artifacts, allowed_paths)
 
         # 2. Retrieve advisory global knowledge
         global_refs = self.global_rag.retrieve(
@@ -62,8 +73,8 @@ class Orchestrator:
             allowed_paths=allowed_paths,
         )
 
-        # 4. Invoke LLM (stateless)
-        raw_output = self.llm.generate(prompt)
+        # 4. Invoke LLM (stateless) with retry logic
+        raw_output = self._llm_generate_with_retry(prompt)
 
         # 5. Parse LLM output (strict contract)
         proposed = parse_llm_output(raw_output)
@@ -113,6 +124,116 @@ class Orchestrator:
     # --------------------------------------------------
     # Helpers
     # --------------------------------------------------
+
+    def _pre_validate_authority(
+        self,
+        active_artifacts: List[Artifact],
+        allowed_paths: List[str],
+    ):
+        """
+        FIX #1: Pre-validation to catch authority violations BEFORE LLM call.
+        
+        Scenario that this prevents:
+        1. User has file A marked as user_modified
+        2. AI tries to modify file A (not in allowed_paths)
+        3. Without this: Expensive LLM call → parse → FAIL validation
+        4. With this: FAIL immediately → save API quota
+        
+        Args:
+            active_artifacts: Currently active artifacts from State RAG
+            allowed_paths: Files the user explicitly allowed for modification
+        
+        Raises:
+            ValueError: If user-modified files exist that aren't in allowed_paths
+        """
+        user_protected = [
+            a for a in active_artifacts 
+            if a.source == ArtifactSource.user_modified 
+            and a.file_path not in allowed_paths
+        ]
+        
+        if user_protected:
+            protected_files = [a.file_path for a in user_protected]
+            raise ValueError(
+                f"Cannot modify user-protected files. "
+                f"These files are marked as user_modified but not in allowed_paths: "
+                f"{protected_files}. "
+                f"Add them to allowed_paths to enable AI modification."
+            )
+
+    def _llm_generate_with_retry(
+        self,
+        prompt: str,
+        max_retries: int = 3,
+    ) -> str:
+        """
+        FIX #2: LLM call with exponential backoff for transient errors.
+        
+        Retries on:
+        - Rate limits (429)
+        - Timeouts
+        - Server errors (500, 503)
+        
+        Does NOT retry on:
+        - Invalid API key (401)
+        - Bad request (400)
+        - Other permanent errors
+        
+        Args:
+            prompt: Prompt to send to LLM
+            max_retries: Maximum number of retry attempts
+        
+        Returns:
+            LLM response text
+        
+        Raises:
+            Exception: If non-transient error or max retries exceeded
+        """
+        for attempt in range(max_retries):
+            try:
+                return self.llm.generate(prompt)
+                
+            except Exception as e:
+                error_msg = str(e).lower()
+                
+                # Check if error is transient (should retry)
+                transient_keywords = [
+                    'timeout',
+                    'rate limit',
+                    '429',  # Too Many Requests
+                    '503',  # Service Unavailable
+                    '500',  # Internal Server Error
+                    'connection',
+                    'temporary',
+                ]
+                
+                is_transient = any(
+                    keyword in error_msg 
+                    for keyword in transient_keywords
+                )
+                
+                if is_transient and attempt < max_retries - 1:
+                    # Exponential backoff: 1s, 2s, 4s
+                    wait_time = 2 ** attempt
+                    print(
+                        f"⚠️  LLM error (attempt {attempt + 1}/{max_retries}): {e}\n"
+                        f"    Retrying in {wait_time}s..."
+                    )
+                    time.sleep(wait_time)
+                    continue
+                
+                # Non-transient error or max retries exceeded
+                if is_transient:
+                    raise RuntimeError(
+                        f"LLM failed after {max_retries} retries. "
+                        f"Last error: {e}"
+                    )
+                else:
+                    # Don't retry non-transient errors
+                    raise
+
+        # Should never reach here, but just in case
+        raise RuntimeError(f"Unexpected retry loop exit after {max_retries} attempts")
 
     def _build_prompt(
         self,
